@@ -1,0 +1,159 @@
+Table tirs_Operator {
+  IDOPERATOR INT
+  NAMAOPERATOR VARCHAR(30)
+  FlagSekat INT
+  sekatCluster INT
+}
+
+Table tirs_Pembayaran {
+  IdPembayaran BIGINT
+  IDRESELLER VARCHAR(16)
+  Waktu DATETIME
+  Sebesar FLOAT
+  bayar FLOAT
+  Keterangan VARCHAR(255)
+  Lunas VARCHAR(15)
+  iduser INT
+  jenis VARCHAR(1)
+
+  indexes {
+    (IdPembayaran, IDRESELLER) [pk]
+  }
+}
+
+Table tirs_Produk {
+  IDPRODUK INT
+  IDOPERATOR INT
+  NAMAPRODUK VARCHAR(255)
+  Nominal INT
+  KodeProduk VARCHAR(20)
+  JenisProduk VARCHAR(1)
+  IsStokKosong VARCHAR(1)
+  IsGangguan VARCHAR(1)
+  jamstart VARCHAR(30)
+  jamend VARCHAR(30)
+  keterangan VARCHAR(150)
+}
+
+Table tirs_MasterReseller {
+  IDRESELLER VARCHAR(16)
+  IDUPLINE VARCHAR(16)
+  NAMARESELLER VARCHAR(50)
+  ALAMATRESELLER VARCHAR(255)
+  KomisiLangsung VARCHAR(1)
+  patokanhargajual INT
+  TambahanHargaPribadi FLOAT
+  TambahanHargaUpLine FLOAT
+  Aktif VARCHAR(1)
+  FlagTambahDownLine VARCHAR(1)
+  UrlReport VARCHAR(255)
+  WaktuJoin DATETIME
+  AktivitasTerakhir DATE
+  IdAreaDomisili INT
+  komisi INT
+  blokir INT
+  namapemilik VARCHAR(50)
+  noktp VARCHAR(30)
+  tgllahir DATE
+  ibukandung VARCHAR(50)
+  telp VARCHAR(15)
+  email VARCHAR(50)
+}
+
+Table tirs_Suplier {
+  Idsuplier INT [pk]
+  NamaSuplier VARCHAR(100)
+  alamat VARCHAR(100)
+  telp VARCHAR(20)
+}
+
+Table tirs_Terminal {
+  IDTERMINAL INT [pk]
+  namaterminal VARCHAR(150)
+  jenisterminal VARCHAR(3)
+  Aktif VARCHAR(1)
+  LogTerakhir VARCHAR(30)
+  idsuplier INT
+}
+
+Table tirs_HistoriMitra {
+  idhistori BIGINT [pk]
+  idreseller VARCHAR(16)
+  idtransaksi BIGINT
+  reffmitra VARCHAR(40)
+  waktu DATETIME
+  keterangan VARCHAR(255)
+  saldo FLOAT
+  sisasaldo FLOAT
+}
+
+Table tirs_Log_User_Akses {
+  IdLog INT [pk]
+  Waktu DATETIME
+  IdUser INT
+  Keterangan VARCHAR(512)
+}
+
+Table tirs_monitor_pindah_data {
+  tanggal DATE [pk]
+  jml_row_historimitra_irs BIGINT
+  jml_saldo_historimitra_irs DECIMAL(19,4)
+  jml_row_historisaldoreseller_irs BIGINT
+  jml_saldo_historisaldoreseller_irs DECIMAL(19,4)
+  jml_row_historimitra_sql BIGINT
+  jml_saldo_historimitra_sql DECIMAL(19,4)
+  jml_row_historisaldoreseller_sql BIGINT
+  jml_saldo_historisaldoreseller_sql DECIMAL(19,4)
+  jml_sukses_irs INT
+  jml_gagal_irs INT
+  jml_pending_irs INT
+  jml_trx_irs INT
+  jml_sukses_sql INT
+  jml_gagal_sql INT
+  jml_pending_sql INT
+  jml_trx_sql INT
+  jml_trxppob_irs INT
+  jml_trxppob_sql INT
+}
+
+Table tirs_Transaksi_Detail {
+  idtransaksi BIGINT [pk]
+  IDRESELLER VARCHAR(16)
+  NamaReseller VARCHAR(50)
+  IDPRODUK INT
+  KodeProduk VARCHAR(20)
+  Nominal INT
+  TANGGAL DATE
+  JAM TIME
+  Tujuan VARCHAR(100)
+  HARGABELI FLOAT
+  HARGAJUAL FLOAT
+  JENISTRANSAKSI VARCHAR(1)
+  STATUSTRANSAKSI INT
+  IdTerminal INT
+  namaterminal VARCHAR(150)
+  HargaJualReseller FLOAT
+  Keterangan VARCHAR(512)
+  SN VARCHAR(255)
+  JumUlang INT
+  PatokanHargaJual INT
+  TanggalTerima DATE
+  JamTerima TIME
+  IdTransaksiClient VARCHAR(40)
+  saldoawal FLOAT
+  saldoakhir FLOAT
+  stok FLOAT
+}
+
+Table tirs_voucherfisikterjual {
+  idtransaksi BIGINT [pk]
+  NoSeri VARCHAR(32)
+  NoGosok VARCHAR(32)
+  TglProduksi DATETIME
+  TglKadaluarsa DATE
+  WaktuKeluar DATETIME
+  IdReseller VARCHAR(16)
+  KodeProduk VARCHAR(20)
+  WaktuInput DATETIME
+  IdUserInput INT
+}

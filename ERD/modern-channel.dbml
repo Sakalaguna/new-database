@@ -1,0 +1,235 @@
+Table operators {
+  operator_id INT [pk, increment]
+  operator_name VARCHAR(100) [not null]
+  is_partitioned BOOLEAN [not null, default: false]
+  partition_cluster INT
+  is_active BOOLEAN [not null, default: true]
+  created_at TIMESTAMP [not null]
+  updated_at TIMESTAMP
+  updated_by VARCHAR(50)
+}
+
+Table suppliers {
+  supplier_id INT [pk, increment]
+  supplier_name VARCHAR(100) [not null]
+  address VARCHAR(255)
+  phone VARCHAR(20)
+  is_active BOOLEAN [not null, default: true]
+  created_at TIMESTAMP [not null]
+  updated_at TIMESTAMP
+  updated_by VARCHAR(50) 
+}
+
+Table terminals {
+  terminal_id INT [pk, increment]
+  terminal_name VARCHAR(150) [not null]
+  terminal_type VARCHAR(10)
+  is_active BOOLEAN [not null, default: true]
+  last_log_at TIMESTAMP
+  supplier_id INT
+  created_at TIMESTAMP [not null]
+  updated_at TIMESTAMP
+  updated_by VARCHAR(50)
+}
+
+Table resellers {
+  reseller_id BIGINT [pk, increment]
+  reseller_code VARCHAR(16) [not null, unique]
+  upline_reseller_id BIGINT
+  reseller_name VARCHAR(100) [not null]
+  address VARCHAR(255)
+  direct_commission_flag BOOLEAN [not null, default: false]
+  base_sell_price NUMERIC(19,4)
+  personal_markup NUMERIC(19,4)
+  upline_markup NUMERIC(19,4)
+  is_active BOOLEAN [not null, default: true]
+  allow_add_downline BOOLEAN [not null, default: false]
+  report_url VARCHAR(255)
+  joined_at TIMESTAMP
+  last_activity_date DATE
+  domicile_area_id INT
+  commission_points INT
+  is_blocked BOOLEAN [not null, default: false]
+  owner_name VARCHAR(100)
+  national_id_number VARCHAR(30)
+  birth_date DATE
+  mother_name VARCHAR(100)
+  phone VARCHAR(20)
+  email VARCHAR(100)
+  created_at TIMESTAMP [not null]
+  updated_at TIMESTAMP
+  updated_by VARCHAR(50)
+}
+
+Table products {
+  product_id INT [pk, increment]
+  operator_id INT [not null]
+  product_name VARCHAR(255) [not null]
+  nominal_value INT
+  product_code VARCHAR(20) [not null, unique]
+  product_type VARCHAR(20)
+  is_out_of_stock BOOLEAN [not null, default: false]
+  is_disrupted BOOLEAN [not null, default: false]
+  available_start_time TIME
+  available_end_time TIME
+  notes VARCHAR(150)
+  is_active BOOLEAN [not null, default: true]
+  created_at TIMESTAMP [not null]
+  updated_at TIMESTAMP
+  updated_by VARCHAR(50)
+}
+
+Table transactions {
+  transaction_id BIGINT [pk]
+  reseller_id BIGINT [not null]
+  reseller_name VARCHAR(100) [not null]
+  product_id INT
+  transaction_date DATE [not null]
+  transaction_time TIME [not null]
+  destination_account VARCHAR(100)
+  purchase_price NUMERIC(19,4)
+  selling_price NUMERIC(19,4)
+  transaction_type VARCHAR(20)
+  transaction_status INT
+  terminal_id INT
+  reseller_selling_price NUMERIC(19,4)
+  notes VARCHAR(512)
+  serial_number VARCHAR(255)
+  retry_count INT
+  benchmark_selling_price NUMERIC(19,4)
+  received_date DATE
+  received_time TIME
+  client_transaction_id VARCHAR(40)
+  opening_balance NUMERIC(19,4)
+  closing_balance NUMERIC(19,4)
+  stock_balance NUMERIC(19,4)
+  created_at TIMESTAMP [not null]
+  updated_at TIMESTAMP
+  updated_by VARCHAR(50)
+}
+
+Table payments {
+  payment_id BIGINT [pk, increment]
+  reseller_id BIGINT [not null]
+  payment_at TIMESTAMP [not null]
+  amount_due NUMERIC(19,4)
+  amount_paid NUMERIC(19,4)
+  notes VARCHAR(255)
+  settlement_status VARCHAR(15)
+  created_by_user_id VARCHAR(36)
+  payment_type VARCHAR(20)
+  created_at TIMESTAMP [not null]
+  updated_at TIMESTAMP
+  updated_by VARCHAR(50)
+}
+
+Table reseller_balance_histories {
+  balance_history_id BIGINT [pk, increment]
+  reseller_id BIGINT [not null]
+  transaction_id BIGINT
+  partner_reference VARCHAR(40)
+  event_at TIMESTAMP [not null]
+  description VARCHAR(255)
+  amount NUMERIC(19,4)
+  remaining_balance NUMERIC(19,4)
+  created_at TIMESTAMP [not null]
+  updated_at TIMESTAMP
+  updated_by VARCHAR(50)
+}
+
+Table sold_physical_vouchers {
+  transaction_id BIGINT [pk]
+  serial_number VARCHAR(32)
+  scratch_number VARCHAR(32)
+  production_at TIMESTAMP
+  expiration_date DATE
+  released_at TIMESTAMP
+  reseller_id BIGINT
+  product_id INT
+  created_at TIMESTAMP
+  created_by_user_id VARCHAR(36)
+}
+
+Table user_access_logs {
+  access_log_id BIGINT [pk, increment]
+  logged_at TIMESTAMP [not null]
+  user_id VARCHAR(36) [not null]
+  description VARCHAR(512)
+  created_at TIMESTAMP [not null] 
+}
+
+Table data_migration_monitor_daily {
+  monitor_date DATE [pk]
+
+  hist_partner_row_count_legacy BIGINT [not null, default: 0]
+  hist_partner_amount_legacy NUMERIC(19,4) [not null, default: 0]
+
+  hist_balance_row_count_legacy BIGINT [not null, default: 0]
+  hist_balance_amount_legacy NUMERIC(19,4) [not null, default: 0]
+
+  hist_partner_row_count_new BIGINT [not null, default: 0]
+  hist_partner_amount_new NUMERIC(19,4) [not null, default: 0]
+
+  success_count_legacy INT [not null, default: 0]
+  failed_count_legacy INT [not null, default: 0] 
+  pending_count_legacy INT [not null, default: 0]
+  total_trx_legacy INT [not null, default: 0]
+
+  success_count_new INT [not null, default: 0]
+  failed_count_new INT [not null, default: 0]
+  pending_count_new INT [not null, default: 0]
+  total_trx_new INT [not null, default: 0]
+
+  total_ppob_trx_legacy INT [not null, default: 0]
+  total_ppob_trx_new INT [not null, default: 0]
+}
+
+Table daily_transaction_mutations {
+  mutation_date DATE
+  supplier_name VARCHAR(50)
+  sub_supplier_name VARCHAR(50)
+  reseller_code VARCHAR(20)
+  reseller_name VARCHAR(100)
+  operator_name VARCHAR(100)
+  product_code VARCHAR(20)
+  product_name VARCHAR(100)
+  denomination INT
+  purchase_price NUMERIC(19,4)
+  selling_price NUMERIC(19,4)
+  discount NUMERIC(19,4)
+  dat_amount NUMERIC(19,4)
+  ar_ap_amount NUMERIC(19,4)
+  net_amount NUMERIC(19,4)
+  switching_fee NUMERIC(19,4)
+  net_switching_amount NUMERIC(19,4)
+  quantity INT
+  margin NUMERIC(19,4)
+  sakala_selling_price NUMERIC(19,4)
+  fee NUMERIC(19,4)
+  fee_dpp NUMERIC(19,4)
+  transaction_status VARCHAR(20)
+  terminal_code VARCHAR(20)
+  terminal_name VARCHAR(50)
+  sales_amount NUMERIC(19,4)
+  cogs_amount NUMERIC(19,4)
+  sales_margin NUMERIC(19,4)
+  supplier_fee NUMERIC(19,4)
+}
+
+Ref: terminals.supplier_id > suppliers.supplier_id
+
+Ref: products.operator_id > operators.operator_id
+Ref: resellers.upline_reseller_id > resellers.reseller_id
+
+Ref: transactions.reseller_id > resellers.reseller_id
+Ref: transactions.product_id > products.product_id
+Ref: transactions.terminal_id > terminals.terminal_id
+
+Ref: payments.reseller_id > resellers.reseller_id
+
+Ref: reseller_balance_histories.reseller_id > resellers.reseller_id
+Ref: reseller_balance_histories.transaction_id > transactions.transaction_id
+
+Ref: sold_physical_vouchers.transaction_id > transactions.transaction_id
+Ref: sold_physical_vouchers.reseller_id > resellers.reseller_id
+Ref: sold_physical_vouchers.product_id > products.product_id
