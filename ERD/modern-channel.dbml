@@ -1,4 +1,4 @@
-Table operators {
+Table master_operator {
   operator_id INT [pk, increment]
   operator_name VARCHAR(100) [not null]
   is_partitioned BOOLEAN [not null, default: false]
@@ -9,7 +9,7 @@ Table operators {
   updated_by VARCHAR(50)
 }
 
-Table suppliers {
+Table master_supplier {
   supplier_id INT [pk, increment]
   supplier_name VARCHAR(100) [not null]
   address VARCHAR(255)
@@ -20,7 +20,7 @@ Table suppliers {
   updated_by VARCHAR(50) 
 }
 
-Table terminals {
+Table master_terminal {
   terminal_id INT [pk, increment]
   terminal_name VARCHAR(150) [not null]
   terminal_type VARCHAR(10)
@@ -32,7 +32,7 @@ Table terminals {
   updated_by VARCHAR(50)
 }
 
-Table resellers {
+Table master_reseller {
   reseller_id BIGINT [pk, increment]
   reseller_code VARCHAR(16) [not null, unique]
   upline_reseller_id BIGINT
@@ -61,7 +61,7 @@ Table resellers {
   updated_by VARCHAR(50)
 }
 
-Table products {
+Table master_product {
   product_id INT [pk, increment]
   operator_id INT [not null]
   product_name VARCHAR(255) [not null]
@@ -216,20 +216,20 @@ Table daily_transaction_mutations {
   supplier_fee NUMERIC(19,4)
 }
 
-Ref: terminals.supplier_id > suppliers.supplier_id
+Ref: master_terminal.supplier_id > master_supplier.supplier_id
 
-Ref: products.operator_id > operators.operator_id
-Ref: resellers.upline_reseller_id > resellers.reseller_id
+Ref: master_product.operator_id > master_operator.operator_id
+Ref: master_reseller.upline_reseller_id > master_reseller.reseller_id
 
-Ref: transactions.reseller_id > resellers.reseller_id
-Ref: transactions.product_id > products.product_id
-Ref: transactions.terminal_id > terminals.terminal_id
+Ref: transactions.reseller_id > master_reseller.reseller_id
+Ref: transactions.product_id > master_product.product_id
+Ref: transactions.terminal_id > master_terminal.terminal_id
 
-Ref: payments.reseller_id > resellers.reseller_id
+Ref: payments.reseller_id > master_reseller.reseller_id
 
-Ref: reseller_balance_histories.reseller_id > resellers.reseller_id
+Ref: reseller_balance_histories.reseller_id > master_reseller.reseller_id
 Ref: reseller_balance_histories.transaction_id > transactions.transaction_id
 
 Ref: sold_physical_vouchers.transaction_id > transactions.transaction_id
-Ref: sold_physical_vouchers.reseller_id > resellers.reseller_id
-Ref: sold_physical_vouchers.product_id > products.product_id
+Ref: sold_physical_vouchers.reseller_id > master_reseller.reseller_id
+Ref: sold_physical_vouchers.product_id > master_product.product_id

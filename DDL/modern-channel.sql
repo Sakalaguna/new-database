@@ -1,8 +1,8 @@
 -- DDL generated from erd/modern-channel.dbml
 -- Target dialect: PostgreSQL
 
-CREATE TABLE operators (
-  operator_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+CREATE TABLE master_operator (
+  operator_id INT PRIMARY KEY,
   operator_name VARCHAR(100) NOT NULL,
   is_partitioned BOOLEAN NOT NULL DEFAULT FALSE,
   partition_cluster INT,
@@ -12,8 +12,8 @@ CREATE TABLE operators (
   updated_by VARCHAR(50)
 );
 
-CREATE TABLE suppliers (
-  supplier_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+CREATE TABLE master_supplier (
+  supplier_id INT PRIMARY KEY,
   supplier_name VARCHAR(100) NOT NULL,
   address VARCHAR(255),
   phone VARCHAR(20),
@@ -23,8 +23,8 @@ CREATE TABLE suppliers (
   updated_by VARCHAR(50)
 );
 
-CREATE TABLE terminals (
-  terminal_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+CREATE TABLE master_terminal (
+  terminal_id INT PRIMARY KEY,
   terminal_name VARCHAR(150) NOT NULL,
   terminal_type VARCHAR(10),
   is_active BOOLEAN NOT NULL DEFAULT TRUE,
@@ -33,12 +33,12 @@ CREATE TABLE terminals (
   created_at TIMESTAMP NOT NULL,
   updated_at TIMESTAMP,
   updated_by VARCHAR(50),
-  CONSTRAINT fk_terminals_supplier
-    FOREIGN KEY (supplier_id) REFERENCES suppliers (supplier_id)
+  CONSTRAINT fk_master_terminal_supplier
+    FOREIGN KEY (supplier_id) REFERENCES master_supplier (supplier_id)
 );
 
-CREATE TABLE resellers (
-  reseller_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+CREATE TABLE master_reseller (
+  reseller_id BIGINT PRIMARY KEY,
   reseller_code VARCHAR(16) NOT NULL UNIQUE,
   upline_reseller_id BIGINT,
   reseller_name VARCHAR(100) NOT NULL,
@@ -65,11 +65,11 @@ CREATE TABLE resellers (
   updated_at TIMESTAMP,
   updated_by VARCHAR(50),
   CONSTRAINT fk_resellers_upline
-    FOREIGN KEY (upline_reseller_id) REFERENCES resellers (reseller_id)
+    FOREIGN KEY (upline_reseller_id) REFERENCES master_reseller (reseller_id)
 );
 
-CREATE TABLE products (
-  product_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+CREATE TABLE master_product (
+  product_id INT PRIMARY KEY,
   operator_id INT NOT NULL,
   product_name VARCHAR(255) NOT NULL,
   nominal_value INT,
@@ -85,7 +85,7 @@ CREATE TABLE products (
   updated_at TIMESTAMP,
   updated_by VARCHAR(50),
   CONSTRAINT fk_products_operator
-    FOREIGN KEY (operator_id) REFERENCES operators (operator_id)
+    FOREIGN KEY (operator_id) REFERENCES master_operator (operator_id)
 );
 
 CREATE TABLE transactions (
@@ -116,15 +116,15 @@ CREATE TABLE transactions (
   updated_at TIMESTAMP,
   updated_by VARCHAR(50),
   CONSTRAINT fk_transactions_reseller
-    FOREIGN KEY (reseller_id) REFERENCES resellers (reseller_id),
+    FOREIGN KEY (reseller_id) REFERENCES master_reseller (reseller_id),
   CONSTRAINT fk_transactions_product
-    FOREIGN KEY (product_id) REFERENCES products (product_id),
+    FOREIGN KEY (product_id) REFERENCES master_product (product_id),
   CONSTRAINT fk_transactions_terminal
-    FOREIGN KEY (terminal_id) REFERENCES terminals (terminal_id)
+    FOREIGN KEY (terminal_id) REFERENCES master_terminal (terminal_id)
 );
 
 CREATE TABLE payments (
-  payment_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  payment_id BIGINT PRIMARY KEY,
   reseller_id BIGINT NOT NULL,
   payment_at TIMESTAMP NOT NULL,
   amount_due NUMERIC(19,4),
@@ -137,11 +137,11 @@ CREATE TABLE payments (
   updated_at TIMESTAMP,
   updated_by VARCHAR(50),
   CONSTRAINT fk_payments_reseller
-    FOREIGN KEY (reseller_id) REFERENCES resellers (reseller_id)
+    FOREIGN KEY (reseller_id) REFERENCES master_reseller (reseller_id)
 );
 
 CREATE TABLE reseller_balance_histories (
-  balance_history_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  balance_history_id BIGINT PRIMARY KEY,
   reseller_id BIGINT NOT NULL,
   transaction_id BIGINT,
   partner_reference VARCHAR(40),
@@ -153,7 +153,7 @@ CREATE TABLE reseller_balance_histories (
   updated_at TIMESTAMP,
   updated_by VARCHAR(50),
   CONSTRAINT fk_reseller_balance_histories_reseller
-    FOREIGN KEY (reseller_id) REFERENCES resellers (reseller_id),
+    FOREIGN KEY (reseller_id) REFERENCES master_reseller (reseller_id),
   CONSTRAINT fk_reseller_balance_histories_transaction
     FOREIGN KEY (transaction_id) REFERENCES transactions (transaction_id)
 );
@@ -172,13 +172,13 @@ CREATE TABLE sold_physical_vouchers (
   CONSTRAINT fk_sold_physical_vouchers_transaction
     FOREIGN KEY (transaction_id) REFERENCES transactions (transaction_id),
   CONSTRAINT fk_sold_physical_vouchers_reseller
-    FOREIGN KEY (reseller_id) REFERENCES resellers (reseller_id),
+    FOREIGN KEY (reseller_id) REFERENCES master_reseller (reseller_id),
   CONSTRAINT fk_sold_physical_vouchers_product
-    FOREIGN KEY (product_id) REFERENCES products (product_id)
+    FOREIGN KEY (product_id) REFERENCES master_product (product_id)
 );
 
 CREATE TABLE user_access_logs (
-  access_log_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  access_log_id BIGINT PRIMARY KEY,
   logged_at TIMESTAMP NOT NULL,
   user_id VARCHAR(36) NOT NULL,
   description VARCHAR(512),
