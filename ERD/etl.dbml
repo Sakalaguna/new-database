@@ -1,0 +1,44 @@
+Table systems {
+  system_code VARCHAR(20) [pk]
+  system_name VARCHAR(100) [not null]
+  description VARCHAR(255)
+  is_active BOOLEAN [not null, default: true]
+  created_at TIMESTAMP [not null]
+  updated_at TIMESTAMP
+  updated_by VARCHAR(50)
+}
+
+Table source_of_truth {
+  sot_id BIGSERIAL [pk]
+
+  entity_code VARCHAR(50) [not null, note: "Identitas data yang dikontrol Contoh : OPERATOR, SUPPLIER"]
+  entity_name VARCHAR(100) [not null]
+
+  source_system_code VARCHAR(20) [not null, note: "Siapa yang menjadi Source of Truth Contoh : LEGACY"]
+  target_system_code VARCHAR(20) [not null, note: "Siapa yang menjadi Target dari data ini Contoh : NEW"]
+
+  sync_direction VARCHAR(20) [not null, note: "Arah sinkronisasi data Contoh : LEGACY_TO_NEW/NEW_TO_LEGACY/BIDIRECTIONAL/NONE"]
+  sync_mode VARCHAR(20) [not null]
+
+  status VARCHAR(20) [not null]
+
+  effective_from DATE [not null]
+  effective_to DATE
+
+  cutover_at TIMESTAMP
+  notes VARCHAR(255)
+
+  created_at TIMESTAMP [not null]
+  updated_at TIMESTAMP
+  updated_by VARCHAR(50)
+
+  indexes {
+    (entity_code, effective_from) [unique]
+    source_system_code
+    target_system_code
+  }
+   note: 'Table untuk menyimpan data source of truth'
+}
+
+Ref: source_of_truth.source_system_code > systems.system_code
+Ref: source_of_truth.target_system_code > systems.system_code
