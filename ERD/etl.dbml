@@ -1,29 +1,93 @@
 Table systems {
-  system_code VARCHAR(20) [pk]
-  system_name VARCHAR(100) [not null]
-  description VARCHAR(255)
-  is_active BOOLEAN [not null, default: true]
-  created_at TIMESTAMP [not null]
-  updated_at TIMESTAMP
-  updated_by VARCHAR(50)
+  system_id bigint [pk, increment]
+  system_code varchar(50) [not null, unique]
+  system_name varchar(100) [not null]
+  system_type varchar(30) [not null, note: 'APPLICATION, DATABASE, REPORTING, EXTERNAL']
+  description text
+  status varchar(20) [not null, default: 'ACTIVE']
+  created_at timestamp [not null]
+  updated_at timestamp
 }
+
+Table modules {
+  module_id bigint [pk, increment]
+  system_id bigint [not null]
+  module_code varchar(50) [not null]
+  module_name varchar(100) [not null]
+  description text
+  status varchar(20) [not null, default: 'ACTIVE']
+  created_at timestamp [not null]
+  updated_at timestamp
+
+  indexes {
+    (system_id, module_code) [unique]
+  }
+}
+
+Table business_processes {
+  process_id bigint [pk, increment]
+  module_id bigint [not null]
+  process_code varchar(100) [not null, unique]
+  process_name varchar(150) [not null]
+  description text
+  status varchar(20) [not null, default: 'ACTIVE']
+  created_at timestamp [not null]
+  updated_at timestamp
+}
+
+Table data_entities {
+  entity_id bigint [pk, increment]
+  entity_code varchar(100) [not null, unique]
+  entity_name varchar(150) [not null]
+  description text
+  status varchar(20) [not null, default: 'ACTIVE']
+  created_at timestamp [not null]
+  updated_at timestamp
+}
+
+Table process_systems {
+  process_system_id bigint [pk, increment]
+  process_id bigint [not null]
+  system_id bigint [not null]
+  role varchar(30) [not null, note: 'SOT, SOURCE, TARGET, VALIDATOR, REPORTING']
+  sequence_no int [not null, default: 1]
+  is_required boolean [not null, default: true]
+  status varchar(20) [not null, default: 'ACTIVE']
+  created_at timestamp [not null]
+  updated_at timestamp
+
+  indexes {
+    (process_id, system_id) [unique]
+  }
+}
+Table entity_tables {
+  entity_table_id bigint [pk, increment]
+  entity_id bigint [not null]
+  system_id bigint [not null]
+  schema_name varchar(100)
+  table_name varchar(150) [not null]
+  is_primary boolean [not null, default: false]
+  status varchar(20) [not null, default: 'ACTIVE']
+  created_at timestamp [not null]
+  updated_at timestamp
+
+  indexes {
+    (system_id, schema_name, table_name) [unique]
+  }
+}
+
 
 Table source_of_truth {
   sot_id BIGSERIAL [pk]
 
   entity_code VARCHAR(50) [not null, note: "Identitas data yang dikontrol Contoh : OPERATOR, SUPPLIER"]
-  entity_name VARCHAR(100) [not null]
-
-  source_system_code VARCHAR(20) [not null, note: "Siapa yang menjadi Source of Truth Contoh : LEGACY"]
-  target_system_code VARCHAR(20) [not null, note: "Siapa yang menjadi Target dari data ini Contoh : NEW"]
-
+  process_id bigint [not null, note: "Proses bisnis yang mengontrol data Contoh : TRANSAKSI, REPORTING"]
   sync_direction VARCHAR(20) [not null, note: "Arah sinkronisasi data Contoh : LEGACY_TO_NEW/NEW_TO_LEGACY/BIDIRECTIONAL/NONE"]
-  sync_mode VARCHAR(20) [not null]
+  sync_mode VARCHAR(20) [not null, note: "Contoh : CDC, API dll"]
 
-  status VARCHAR(20) [not null]
+  status VARCHAR(20) [not null, note:"MIGRATING,COMPLETED,PAUSED"]
 
   effective_from DATE [not null]
-  effective_to DATE
 
   cutover_at TIMESTAMP
   notes VARCHAR(255)
@@ -40,5 +104,16 @@ Table source_of_truth {
    note: 'Table untuk menyimpan data source of truth'
 }
 
-Ref: source_of_truth.source_system_code > systems.system_code
-Ref: source_of_truth.target_system_code > systems.system_code
+Ref: modules.system_id > systems.system_id
+
+Ref: business_processes.module_id > modules.module_id
+
+Ref: process_systems.process_id > business_processes.process_id
+Ref: process_systems.system_id > systems.system_id
+
+Ref: entity_tables.entity_id > data_entities.entity_id
+Ref: entity_tables.system_id > systems.system_id
+
+Ref: source_of_truth.entity_code > data_entities.entity_code
+
+Ref: source_of_truth.process_id > business_processes.process_id
