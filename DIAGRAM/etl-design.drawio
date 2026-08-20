@@ -1,6 +1,6 @@
 <mxfile host="65bd71144e">
     <diagram id="Wx9DWpA0UAn279LWrOry" name="Arsitektur">
-        <mxGraphModel dx="2598" dy="1065" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+        <mxGraphModel dx="1644" dy="693" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -422,7 +422,7 @@
         </mxGraphModel>
     </diagram>
     <diagram name="Arsitektur-SOT" id="4BgTLoE7yrRVumTFFefN">
-        <mxGraphModel dx="2685" dy="1118" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+        <mxGraphModel dx="2133" dy="1120" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
             <root>
                 <mxCell id="h9MfEHFLZwGIGjT0B99B-0"/>
                 <mxCell id="h9MfEHFLZwGIGjT0B99B-1" parent="h9MfEHFLZwGIGjT0B99B-0"/>
