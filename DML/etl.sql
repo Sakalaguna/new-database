@@ -147,7 +147,7 @@ VALUES
 
 INSERT INTO sot_entity_tables
 (
-    entity_id,
+    data_entity_id,
     system_id,
     schema_name,
     table_name,
@@ -155,7 +155,7 @@ INSERT INTO sot_entity_tables
     status
 )
 SELECT
-    e.entity_id,
+    e.data_entity_id,
     s.system_id,
     t.schema_name,
     t.table_name,
@@ -194,23 +194,19 @@ JOIN sot_systems s
 
 INSERT INTO sot_config
 (
-    entity_id,
-    process_id,
+    data_entity_id,
+    business_process_id,
     source_system_id,
     target_system_id,
-    sync_direction,
-    sync_mode,
     status,
     effective_from,
     notes
 )
 SELECT
-    e.entity_id,
-    bp.process_id,
+    e.data_entity_id,
+    bp.business_process_id,
     src.system_id,
     tgt.system_id,
-    'LEGACY_TO_NEW',
-    'API',
     'MIGRATING',
     CURRENT_DATE,
     x.notes
@@ -261,7 +257,7 @@ JOIN sot_systems tgt
 == Query Report ==
 
 SELECT
-    sot.sot_id,
+    sot.sot_config_id,
     e.entity_code,
     e.entity_name,
     bp.process_code,
@@ -272,27 +268,26 @@ SELECT
     tgt.system_code AS target_system,
     tgt_tbl.schema_name AS target_schema,
     tgt_tbl.table_name AS target_table,
-    sot.sync_direction,
-    sot.sync_mode,
     sot.status,
+    sot.sequence_no,
     sot.effective_from,
     sot.cutover_at,
     sot.notes
 FROM sot_config sot
 JOIN sot_data_entities e
-    ON e.entity_id = sot.entity_id
+    ON e.data_entity_id = sot.data_entity_id
 JOIN sot_business_processes bp
-    ON bp.process_id = sot.process_id
+    ON bp.business_process_id = sot.business_process_id
 JOIN sot_systems src
     ON src.system_id = sot.source_system_id
 LEFT JOIN sot_systems tgt
     ON tgt.system_id = sot.target_system_id
 LEFT JOIN sot_entity_tables src_tbl
-    ON src_tbl.entity_id = sot.entity_id
+    ON src_tbl.data_entity_id = sot.data_entity_id
     AND src_tbl.system_id = sot.source_system_id
     AND src_tbl.is_primary = true
 LEFT JOIN sot_entity_tables tgt_tbl
-    ON tgt_tbl.entity_id = sot.entity_id
+    ON tgt_tbl.data_entity_id = sot.data_entity_id
     AND tgt_tbl.system_id = sot.target_system_id
     AND tgt_tbl.is_primary = true
 ORDER BY

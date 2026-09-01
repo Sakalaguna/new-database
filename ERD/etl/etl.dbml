@@ -1,0 +1,185 @@
+Table etl_cdc_bookmark {
+  source_system_id bigint [not null]
+  capture_name varchar(100) [not null]
+  last_lsn varchar(30) [not null]
+  updated_at timestamptz [not null, default: `CURRENT_TIMESTAMP`]
+
+  indexes {
+    (source_system_id, capture_name) [pk]
+  }
+}
+
+
+Table etl_id_crosswalk {
+  crosswalk_id bigint [pk, increment]
+  entity_code varchar(100) [not null]
+  legacy_system_id bigint [not null]
+  legacy_id varchar(100) [not null]
+  new_system_id bigint [not null]
+  new_id bigint [not null]
+  is_canonical bool [not null, default: true]
+  created_at timestamptz [not null, default: `CURRENT_TIMESTAMP`]
+  updated_at timestamptz
+
+  indexes {
+    (entity_code, legacy_system_id, legacy_id) [unique]
+    (entity_code, new_system_id, new_id) [name: 'idx_id_crosswalk_new']
+  }
+}
+
+
+Table etl_job_run {
+  job_run_id bigint [pk, increment]
+  trigger_type trigger_type [not null]
+  process_code varchar(100)
+  entity_code varchar(100)
+  status run_status [not null, default: 'RUNNING']
+  rows_read bigint [not null, default: 0]
+  rows_written bigint [not null, default: 0]
+  error_text text
+  requested_by varchar(50)
+  started_at timestamptz [not null, default: `CURRENT_TIMESTAMP`]
+  finished_at timestamptz
+
+  indexes {
+    process_code [name: 'idx_run_process']
+    status [name: 'idx_run_status']
+    (started_at, job_run_id) [name: 'idx_run_started_desc']
+  }
+}
+
+
+Table etl_row_queue {
+  row_queue_id bigint [pk, increment]
+  entity_code varchar(100) [not null]
+  row_id varchar(100) [not null]
+  operation queue_operation [not null]
+  origin_system_id bigint [not null]
+  payload jsonb
+  status queue_status [not null, default: 'PENDING']
+  attempt_count int [not null, default: 0]
+  job_run_id bigint
+  source_updated_at timestamptz
+  created_at timestamptz [not null, default: `CURRENT_TIMESTAMP`]
+  processed_at timestamptz
+  claimed_at timestamptz
+
+  indexes {
+    (entity_code, row_id) [name: 'idx_queue_entity_row']
+    job_run_id [name: 'idx_queue_run']
+    status [name: 'idx_queue_status']
+  }
+}
+
+
+Table sot_systems {
+  system_id bigint [pk, increment]
+  system_code varchar(50) [not null, unique]
+  system_name varchar(100) [not null]
+  system_type varchar(30) [not null]
+  description text
+  status registry_status [not null, default: 'ACTIVE']
+  created_at timestamptz [not null, default: `CURRENT_TIMESTAMP`]
+  updated_at timestamptz
+}
+
+
+Table sot_modules {
+  module_id bigint [pk, increment]
+  module_code varchar(50) [not null, unique]
+  module_name varchar(100) [not null]
+  description text
+  status registry_status [not null, default: 'ACTIVE']
+  created_at timestamptz [not null, default: `CURRENT_TIMESTAMP`]
+  updated_at timestamptz
+}
+
+
+Table sot_business_processes {
+  business_process_id bigint [pk, increment]
+  module_id bigint [not null]
+  process_code varchar(100) [not null, unique]
+  process_name varchar(150) [not null]
+  description text
+  status registry_status [not null, default: 'ACTIVE']
+  created_at timestamptz [not null, default: `CURRENT_TIMESTAMP`]
+  updated_at timestamptz
+
+  indexes {
+    module_id [name: 'idx_sot_business_processes_module']
+  }
+}
+
+
+Table sot_data_entities {
+  data_entity_id bigint [pk, increment]
+  entity_code varchar(100) [not null, unique]
+  entity_name varchar(150) [not null]
+  description text
+  status registry_status [not null, default: 'ACTIVE']
+  delete_policy delete_policy [not null, default: 'SOFT']
+  created_at timestamptz [not null, default: `CURRENT_TIMESTAMP`]
+  updated_at timestamptz
+}
+
+
+Table sot_entity_tables {
+  entity_table_id bigint [pk, increment]
+  data_entity_id bigint [not null]
+  system_id bigint [not null]
+  schema_name varchar(100) [not null]
+  table_name varchar(150) [not null]
+  is_primary bool [not null, default: false]
+  status registry_status [not null, default: 'ACTIVE']
+  created_at timestamptz [not null, default: `CURRENT_TIMESTAMP`]
+  updated_at timestamptz
+
+  indexes {
+    (system_id, schema_name, table_name) [unique]
+    data_entity_id [name: 'idx_sot_entity_tables_entity']
+    system_id [name: 'idx_sot_entity_tables_system']
+    (data_entity_id, system_id) [name: 'uq_sot_entity_tables_one_primary', unique, note: 'partial: WHERE is_primary']
+  }
+}
+
+
+Table sot_config {
+  sot_config_id bigint [pk, increment]
+  data_entity_id bigint [not null]
+  business_process_id bigint [not null]
+  source_system_id bigint [not null]
+  target_system_id bigint [not null]
+  status sot_status [not null, default: 'PLANNED']
+  sequence_no int [not null, default: 1]
+  effective_from date [not null]
+  cutover_at timestamptz
+  notes text
+  created_at timestamptz [not null, default: `CURRENT_TIMESTAMP`]
+  updated_at timestamptz
+  updated_by varchar(50)
+
+  indexes {
+    (data_entity_id, effective_from) [unique]
+    business_process_id [name: 'idx_sot_config_process']
+    source_system_id [name: 'idx_sot_config_source_system']
+    status [name: 'idx_sot_config_status']
+    target_system_id [name: 'idx_sot_config_target_system']
+    data_entity_id [name: 'uq_sot_config_one_in_force_per_entity', unique, note: 'partial: WHERE status = MIGRATING']
+  }
+
+  note: 'Konfigurasi Source of Truth untuk menentukan sistem sumber kebenaran data antar entitas.'
+}
+
+
+// =====================================================
+// RELATIONSHIPS
+// =====================================================
+
+Ref: sot_business_processes.module_id > sot_modules.module_id
+Ref: sot_entity_tables.data_entity_id > sot_data_entities.data_entity_id
+Ref: sot_entity_tables.system_id > sot_systems.system_id
+Ref: sot_config.data_entity_id > sot_data_entities.data_entity_id
+Ref: sot_config.business_process_id > sot_business_processes.business_process_id
+Ref: sot_config.source_system_id > sot_systems.system_id
+Ref: sot_config.target_system_id > sot_systems.system_id
+Ref: etl_row_queue.job_run_id > etl_job_run.job_run_id

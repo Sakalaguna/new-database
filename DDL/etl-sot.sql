@@ -1,244 +1,228 @@
--- ============================================================
--- SOT FRAMEWORK
--- PostgreSQL DDL
--- ============================================================
+-- public.etl_cdc_bookmark definition
 
+-- Drop table
 
--- ============================================================
--- 1. SOT SYSTEMS
--- ============================================================
+-- DROP TABLE public.etl_cdc_bookmark;
 
-CREATE TABLE sot_systems (
-    system_id BIGSERIAL PRIMARY KEY,
-
-    system_code VARCHAR(50) NOT NULL UNIQUE,
-
-    system_name VARCHAR(100) NOT NULL,
-
-    system_type VARCHAR(30) NOT NULL,
-
-    description TEXT,
-
-    status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
-
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    updated_at TIMESTAMP
+CREATE TABLE public.etl_cdc_bookmark (
+	source_system_id int8 NOT NULL,
+	capture_name varchar(100) NOT NULL,
+	last_lsn varchar(30) NOT NULL,
+	updated_at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	CONSTRAINT etl_cdc_bookmark_pkey PRIMARY KEY (source_system_id, capture_name)
 );
 
-COMMENT ON TABLE sot_systems IS
-'Master system yang terlibat dalam framework Source of Truth.';
 
-COMMENT ON COLUMN sot_systems.system_type IS
-'APPLICATION, DATABASE, REPORTING, EXTERNAL';
+-- public.etl_id_crosswalk definition
+
+-- Drop table
+
+-- DROP TABLE public.etl_id_crosswalk;
+
+CREATE TABLE public.etl_id_crosswalk (
+	crosswalk_id int8 GENERATED ALWAYS AS IDENTITY( INCREMENT BY 1 MINVALUE 1 MAXVALUE 9223372036854775807 START 1 CACHE 1 NO CYCLE) NOT NULL,
+	entity_code varchar(100) NOT NULL,
+	legacy_system_id int8 NOT NULL,
+	legacy_id varchar(100) NOT NULL,
+	new_system_id int8 NOT NULL,
+	new_id int8 NOT NULL,
+	is_canonical bool DEFAULT true NOT NULL,
+	created_at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	updated_at timestamptz NULL,
+	CONSTRAINT etl_id_crosswalk_entity_code_legacy_system_id_legacy_id_key UNIQUE (entity_code, legacy_system_id, legacy_id),
+	CONSTRAINT etl_id_crosswalk_pkey PRIMARY KEY (crosswalk_id)
+);
+CREATE INDEX idx_id_crosswalk_new ON public.etl_id_crosswalk USING btree (entity_code, new_system_id, new_id);
 
 
--- ============================================================
--- 2. SOT MODULES
--- ============================================================
+-- public.etl_job_run definition
 
-CREATE TABLE sot_modules (
-    module_id BIGSERIAL PRIMARY KEY,
+-- Drop table
 
-    module_code VARCHAR(50) NOT NULL UNIQUE,
+-- DROP TABLE public.etl_job_run;
 
-    module_name VARCHAR(100) NOT NULL,
+CREATE TABLE public.etl_job_run (
+	job_run_id int8 GENERATED ALWAYS AS IDENTITY( INCREMENT BY 1 MINVALUE 1 MAXVALUE 9223372036854775807 START 1 CACHE 1 NO CYCLE) NOT NULL,
+	"trigger_type" public."trigger_type" NOT NULL,
+	process_code varchar(100) NULL,
+	entity_code varchar(100) NULL,
+	status public."run_status" DEFAULT 'RUNNING'::run_status NOT NULL,
+	rows_read int8 DEFAULT 0 NOT NULL,
+	rows_written int8 DEFAULT 0 NOT NULL,
+	error_text text NULL,
+	requested_by varchar(50) NULL,
+	started_at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	finished_at timestamptz NULL,
+	CONSTRAINT etl_job_run_pkey PRIMARY KEY (job_run_id)
+);
+CREATE INDEX idx_run_process ON public.etl_job_run USING btree (process_code);
+CREATE INDEX idx_run_started_desc ON public.etl_job_run USING btree (started_at DESC, job_run_id DESC);
+CREATE INDEX idx_run_status ON public.etl_job_run USING btree (status);
 
-    description TEXT,
 
-    status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
+-- public.etl_row_queue definition
 
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+-- Drop table
 
-    updated_at TIMESTAMP
+-- DROP TABLE public.etl_row_queue;
+
+CREATE TABLE public.etl_row_queue (
+	row_queue_id int8 GENERATED ALWAYS AS IDENTITY( INCREMENT BY 1 MINVALUE 1 MAXVALUE 9223372036854775807 START 1 CACHE 1 NO CYCLE) NOT NULL,
+	entity_code varchar(100) NOT NULL,
+	row_id varchar(100) NOT NULL,
+	operation public."queue_operation" NOT NULL,
+	origin_system_id int8 NOT NULL,
+	payload jsonb NULL,
+	status public."queue_status" DEFAULT 'PENDING'::queue_status NOT NULL,
+	attempt_count int4 DEFAULT 0 NOT NULL,
+	job_run_id int8 NULL,
+	source_updated_at timestamptz NULL,
+	created_at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	processed_at timestamptz NULL,
+	claimed_at timestamptz NULL,
+	CONSTRAINT etl_row_queue_pkey PRIMARY KEY (row_queue_id)
+);
+CREATE INDEX idx_queue_entity_row ON public.etl_row_queue USING btree (entity_code, row_id);
+CREATE INDEX idx_queue_run ON public.etl_row_queue USING btree (job_run_id);
+CREATE INDEX idx_queue_status ON public.etl_row_queue USING btree (status);
+
+
+-- public.sot_data_entities definition
+
+-- Drop table
+
+-- DROP TABLE public.sot_data_entities;
+
+CREATE TABLE public.sot_data_entities (
+	data_entity_id int8 GENERATED ALWAYS AS IDENTITY( INCREMENT BY 1 MINVALUE 1 MAXVALUE 9223372036854775807 START 1 CACHE 1 NO CYCLE) NOT NULL,
+	entity_code varchar(100) NOT NULL,
+	entity_name varchar(150) NOT NULL,
+	description text NULL,
+	status public."registry_status" DEFAULT 'ACTIVE'::registry_status NOT NULL,
+	"delete_policy" public."delete_policy" DEFAULT 'SOFT'::delete_policy NOT NULL,
+	created_at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	updated_at timestamptz NULL,
+	CONSTRAINT sot_data_entities_entity_code_key UNIQUE (entity_code),
+	CONSTRAINT sot_data_entities_pkey PRIMARY KEY (data_entity_id)
 );
 
-COMMENT ON TABLE sot_modules IS
-'Master domain atau modul bisnis yang digunakan oleh proses SOT.';
 
+-- public.sot_modules definition
 
--- ============================================================
--- 3. SOT BUSINESS PROCESSES
--- ============================================================
+-- Drop table
 
-CREATE TABLE sot_business_processes (
-    process_id BIGSERIAL PRIMARY KEY,
+-- DROP TABLE public.sot_modules;
 
-    module_id BIGINT NOT NULL,
-
-    process_code VARCHAR(100) NOT NULL UNIQUE,
-
-    process_name VARCHAR(150) NOT NULL,
-
-    description TEXT,
-
-    status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
-
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    updated_at TIMESTAMP,
-
-    CONSTRAINT fk_sot_business_processes_module
-        FOREIGN KEY (module_id)
-        REFERENCES sot_modules(module_id)
+CREATE TABLE public.sot_modules (
+	module_id int8 GENERATED ALWAYS AS IDENTITY( INCREMENT BY 1 MINVALUE 1 MAXVALUE 9223372036854775807 START 1 CACHE 1 NO CYCLE) NOT NULL,
+	module_code varchar(50) NOT NULL,
+	module_name varchar(100) NOT NULL,
+	description text NULL,
+	status public."registry_status" DEFAULT 'ACTIVE'::registry_status NOT NULL,
+	created_at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	updated_at timestamptz NULL,
+	CONSTRAINT sot_modules_module_code_key UNIQUE (module_code),
+	CONSTRAINT sot_modules_pkey PRIMARY KEY (module_id)
 );
 
-COMMENT ON TABLE sot_business_processes IS
-'Master proses bisnis yang dikontrol atau terlibat dalam framework SOT.';
 
+-- public.sot_systems definition
 
-CREATE INDEX idx_sot_business_processes_module
-    ON sot_business_processes(module_id);
+-- Drop table
 
+-- DROP TABLE public.sot_systems;
 
--- ============================================================
--- 4. SOT DATA ENTITIES
--- ============================================================
-
-CREATE TABLE sot_data_entities (
-    entity_id BIGSERIAL PRIMARY KEY,
-
-    entity_code VARCHAR(100) NOT NULL UNIQUE,
-
-    entity_name VARCHAR(150) NOT NULL,
-
-    description TEXT,
-
-    status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
-
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    updated_at TIMESTAMP
+CREATE TABLE public.sot_systems (
+	system_id int8 GENERATED ALWAYS AS IDENTITY( INCREMENT BY 1 MINVALUE 1 MAXVALUE 9223372036854775807 START 1 CACHE 1 NO CYCLE) NOT NULL,
+	system_code varchar(50) NOT NULL,
+	system_name varchar(100) NOT NULL,
+	system_type varchar(30) NOT NULL,
+	description text NULL,
+	status public."registry_status" DEFAULT 'ACTIVE'::registry_status NOT NULL,
+	created_at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	updated_at timestamptz NULL,
+	CONSTRAINT sot_systems_pkey PRIMARY KEY (system_id),
+	CONSTRAINT sot_systems_system_code_key UNIQUE (system_code)
 );
 
-COMMENT ON TABLE sot_data_entities IS
-'Definisi logical business entity yang dikelola oleh framework SOT.';
 
+-- public.sot_business_processes definition
 
+-- Drop table
 
--- ============================================================
--- 6. SOT ENTITY TABLES
--- ============================================================
+-- DROP TABLE public.sot_business_processes;
 
-CREATE TABLE sot_entity_tables (
-    entity_table_id BIGSERIAL PRIMARY KEY,
-
-    entity_id BIGINT NOT NULL,
-
-    system_id BIGINT NOT NULL,
-
-    schema_name VARCHAR(100) NOT NULL,
-
-    table_name VARCHAR(150) NOT NULL,
-
-    is_primary BOOLEAN NOT NULL DEFAULT FALSE,
-
-    status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
-
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    updated_at TIMESTAMP,
-
-    CONSTRAINT fk_sot_entity_tables_entity
-        FOREIGN KEY (entity_id)
-        REFERENCES sot_data_entities(entity_id),
-
-    CONSTRAINT fk_sot_entity_tables_system
-        FOREIGN KEY (system_id)
-        REFERENCES sot_systems(system_id),
-
-    CONSTRAINT uq_sot_entity_tables
-        UNIQUE (system_id, schema_name, table_name)
+CREATE TABLE public.sot_business_processes (
+	business_process_id int8 GENERATED ALWAYS AS IDENTITY( INCREMENT BY 1 MINVALUE 1 MAXVALUE 9223372036854775807 START 1 CACHE 1 NO CYCLE) NOT NULL,
+	module_id int8 NOT NULL,
+	process_code varchar(100) NOT NULL,
+	process_name varchar(150) NOT NULL,
+	description text NULL,
+	status public."registry_status" DEFAULT 'ACTIVE'::registry_status NOT NULL,
+	created_at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	updated_at timestamptz NULL,
+	CONSTRAINT sot_business_processes_pkey PRIMARY KEY (business_process_id),
+	CONSTRAINT sot_business_processes_process_code_key UNIQUE (process_code),
+	CONSTRAINT sot_business_processes_module_id_fkey FOREIGN KEY (module_id) REFERENCES public.sot_modules(module_id) ON DELETE CASCADE
 );
-
-COMMENT ON TABLE sot_entity_tables IS
-'Mapping logical data entity ke physical table pada masing-masing system.';
+CREATE INDEX idx_sot_business_processes_module ON public.sot_business_processes USING btree (module_id);
 
 
-CREATE INDEX idx_sot_entity_tables_entity
-    ON sot_entity_tables(entity_id);
+-- public.sot_config definition
 
-CREATE INDEX idx_sot_entity_tables_system
-    ON sot_entity_tables(system_id);
+-- Drop table
 
+-- DROP TABLE public.sot_config;
 
--- ============================================================
--- 7. SOT SOURCE OF TRUTH
--- ============================================================
-
-CREATE TABLE sot_config (
-    sot_id BIGSERIAL PRIMARY KEY,
-
-    entity_id BIGINT NOT NULL,
-
-    process_id BIGINT NOT NULL,
-
-    source_system_id BIGINT NOT NULL,
-
-    target_system_id BIGINT,
-
-    sync_direction VARCHAR(20) NOT NULL,
-
-    sync_mode VARCHAR(20) NOT NULL,
-
-    status VARCHAR(20) NOT NULL,
-
-    effective_from DATE NOT NULL,
-
-    cutover_at TIMESTAMP,
-
-    notes VARCHAR(255),
-
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    updated_at TIMESTAMP,
-
-    updated_by VARCHAR(50),
-
-    CONSTRAINT fk_sot_sot_entity
-        FOREIGN KEY (entity_id)
-        REFERENCES sot_data_entities(entity_id),
-
-    CONSTRAINT fk_sot_sot_process
-        FOREIGN KEY (process_id)
-        REFERENCES sot_business_processes(process_id),
-
-    CONSTRAINT fk_sot_sot_source_system
-        FOREIGN KEY (source_system_id)
-        REFERENCES sot_systems(system_id),
-
-    CONSTRAINT fk_sot_sot_target_system
-        FOREIGN KEY (target_system_id)
-        REFERENCES sot_systems(system_id),
-
-    CONSTRAINT uq_sot_config
-        UNIQUE (entity_id, effective_from)
+CREATE TABLE public.sot_config (
+	sot_config_id int8 GENERATED ALWAYS AS IDENTITY( INCREMENT BY 1 MINVALUE 1 MAXVALUE 9223372036854775807 START 1 CACHE 1 NO CYCLE) NOT NULL,
+	data_entity_id int8 NOT NULL,
+	business_process_id int8 NOT NULL,
+	source_system_id int8 NOT NULL,
+	target_system_id int8 NOT NULL,
+	status public."sot_status" DEFAULT 'PLANNED'::sot_status NOT NULL,
+	sequence_no int4 DEFAULT 1 NOT NULL,
+	effective_from date NOT NULL,
+	cutover_at timestamptz NULL,
+	notes text NULL,
+	created_at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	updated_at timestamptz NULL,
+	updated_by varchar(50) NULL,
+	CONSTRAINT sot_config_data_entity_id_effective_from_key UNIQUE (data_entity_id, effective_from),
+	CONSTRAINT sot_config_pkey PRIMARY KEY (sot_config_id),
+	CONSTRAINT sot_config_business_process_id_fkey FOREIGN KEY (business_process_id) REFERENCES public.sot_business_processes(business_process_id) ON DELETE RESTRICT,
+	CONSTRAINT sot_config_data_entity_id_fkey FOREIGN KEY (data_entity_id) REFERENCES public.sot_data_entities(data_entity_id) ON DELETE RESTRICT,
+	CONSTRAINT sot_config_source_system_id_fkey FOREIGN KEY (source_system_id) REFERENCES public.sot_systems(system_id) ON DELETE RESTRICT,
+	CONSTRAINT sot_config_target_system_id_fkey FOREIGN KEY (target_system_id) REFERENCES public.sot_systems(system_id) ON DELETE RESTRICT
 );
-
-COMMENT ON TABLE sot_config IS
-'Konfigurasi Source of Truth untuk menentukan system yang menjadi sumber kebenaran data dan arah sinkronisasi.';
-
-COMMENT ON COLUMN sot_config.sync_direction IS
-'LEGACY_TO_NEW, NEW_TO_LEGACY, BIDIRECTIONAL, NONE';
-
-COMMENT ON COLUMN sot_config.sync_mode IS
-'CDC, API, BATCH, MANUAL';
-
-COMMENT ON COLUMN sot_config.status IS
-'MIGRATING, COMPLETED, PAUSED';
+CREATE INDEX idx_sot_config_process ON public.sot_config USING btree (business_process_id);
+CREATE INDEX idx_sot_config_source_system ON public.sot_config USING btree (source_system_id);
+CREATE INDEX idx_sot_config_status ON public.sot_config USING btree (status);
+CREATE INDEX idx_sot_config_target_system ON public.sot_config USING btree (target_system_id);
+CREATE UNIQUE INDEX uq_sot_config_one_in_force_per_entity ON public.sot_config USING btree (data_entity_id) WHERE (status = 'MIGRATING'::sot_status);
 
 
-CREATE INDEX idx_sot_sot_process
-    ON sot_config(process_id);
+-- public.sot_entity_tables definition
 
-CREATE INDEX idx_sot_sot_source_system
-    ON sot_config(source_system_id);
+-- Drop table
 
-CREATE INDEX idx_sot_sot_target_system
-    ON sot_config(target_system_id);
+-- DROP TABLE public.sot_entity_tables;
 
-CREATE INDEX idx_sot_sot_entity
-    ON sot_config(entity_id);
-
-CREATE INDEX idx_sot_sot_status
-    ON sot_config(status);
+CREATE TABLE public.sot_entity_tables (
+	entity_table_id int8 GENERATED ALWAYS AS IDENTITY( INCREMENT BY 1 MINVALUE 1 MAXVALUE 9223372036854775807 START 1 CACHE 1 NO CYCLE) NOT NULL,
+	data_entity_id int8 NOT NULL,
+	system_id int8 NOT NULL,
+	schema_name varchar(100) NOT NULL,
+	table_name varchar(150) NOT NULL,
+	is_primary bool DEFAULT false NOT NULL,
+	status public."registry_status" DEFAULT 'ACTIVE'::registry_status NOT NULL,
+	created_at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	updated_at timestamptz NULL,
+	CONSTRAINT sot_entity_tables_pkey PRIMARY KEY (entity_table_id),
+	CONSTRAINT sot_entity_tables_system_id_schema_name_table_name_key UNIQUE (system_id, schema_name, table_name),
+	CONSTRAINT sot_entity_tables_data_entity_id_fkey FOREIGN KEY (data_entity_id) REFERENCES public.sot_data_entities(data_entity_id) ON DELETE CASCADE,
+	CONSTRAINT sot_entity_tables_system_id_fkey FOREIGN KEY (system_id) REFERENCES public.sot_systems(system_id) ON DELETE CASCADE
+);
+CREATE INDEX idx_sot_entity_tables_entity ON public.sot_entity_tables USING btree (data_entity_id);
+CREATE INDEX idx_sot_entity_tables_system ON public.sot_entity_tables USING btree (system_id);
+CREATE UNIQUE INDEX uq_sot_entity_tables_one_primary ON public.sot_entity_tables USING btree (data_entity_id, system_id) WHERE is_primary;
