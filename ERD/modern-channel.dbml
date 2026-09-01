@@ -216,6 +216,34 @@ Table daily_transaction_mutations {
   supplier_fee NUMERIC(19,4)
 }
 
+Table master_supplier_sub {
+  id_sub_supplier bigint [pk]
+  nama_sub_supplier varchar(100) [not null]
+  id_supplier bigint [not null]
+  format_no_alokasi varchar(30) [not null, default: '']
+  flag_ppob boolean [not null, default: false]
+  created_at timestamp [not null]
+  updated_at timestamp
+  indexes {
+    id_supplier
+    (id_supplier, nama_sub_supplier) [unique]
+  }
+}
+
+Table master_supplier_sub_ledger {
+  id_supplier_sub_ledger bigint [pk, increment]
+  id_sub_supplier bigint [not null]
+  ledger_type varchar(50) [not null]
+  ledger_id varchar(30) [not null]
+  created_at timestamp [not null]
+  updated_at timestamp
+  indexes {
+    (id_sub_supplier, ledger_type) [unique]
+    ledger_id
+  }
+}
+
+
 Ref: master_terminal.supplier_id > master_supplier.supplier_id
 
 Ref: master_product.operator_id > master_operator.operator_id
@@ -233,3 +261,5 @@ Ref: reseller_balance_histories.transaction_id > transactions.transaction_id
 Ref: sold_physical_vouchers.transaction_id > transactions.transaction_id
 Ref: sold_physical_vouchers.reseller_id > master_reseller.reseller_id
 Ref: sold_physical_vouchers.product_id > master_product.product_id
+
+Ref: master_supplier_sub_ledger.id_sub_supplier > master_supplier_sub.id_sub_supplier
