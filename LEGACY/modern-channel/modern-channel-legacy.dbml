@@ -157,3 +157,27 @@ Table tirs_voucherfisikterjual {
   WaktuInput DATETIME
   IdUserInput INT
 }
+
+Table tirs_Suplier_Sub {
+
+  IdSubSuplier int [pk, not null]
+  NamaSubSuplier varchar(100) [not null]
+  IdSuplier int [not null]
+  FormatNoAlokasi varchar(30) [not null]
+
+  LedgerID_Debet varchar(30)
+  LedgerID_Credit varchar(30)
+  LedgerID_VAT varchar(30)
+  LedgerID_PrepaidTax varchar(30)
+  LedgerID_Other varchar(30)
+  strLedgerIDForAR varchar(30)
+  strLedgerIDForPurchase varchar(30)
+  strLedgerIDForSales varchar(30)
+  strLedgerIDForCOGS varchar(30)
+  strLedgerIDForPurchaseDisc varchar(30)
+  strLedgerIDForCOGSFee varchar(30)
+  strLedgerIDForAccruedExpenses varchar(30)
+  strLedgerIDForAdvancePayment varchar(30)
+
+  Flag_PPOB varchar(1) [not null, default: '0']
+}
