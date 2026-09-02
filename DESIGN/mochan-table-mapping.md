@@ -2,9 +2,9 @@
 
 Dokumen ini merangkum pemetaan tabel dari skema legacy Mochan ke skema baru PostgreSQL berdasarkan:
 
-- `ERD/mochan/modern-channel-legacy.dbml`
-- `ERD/mochan/modern-channel.dbml`
-- `DDL/modern-channel.sql`
+- `ERD/legacy-isat/mochan.dbml`
+- `ERD/sakalaguna/mochan.dbml`
+- `DDL/sakalaguna/mochan.sql`
 
 ## Ringkasan
 
