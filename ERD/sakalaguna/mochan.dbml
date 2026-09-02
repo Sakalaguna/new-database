@@ -233,7 +233,7 @@ Table mochan.daily_transaction_mutations {
 Table mochan.master_supplier_sub {
   supplier_sub_id BIGINT [pk]
   supplier_sub_name VARCHAR(100) [not null]
-  supplier_id BIGINT [not null]
+  supplier_id INTEGER [not null]
   format_no_alokasi VARCHAR(30) [not null, default: '']
   is_ppob BOOLEAN [not null, default: false]
   created_at TIMESTAMP [not null]
@@ -280,5 +280,5 @@ Ref: mochan.sold_physical_vouchers.transaction_id > mochan.transactions.transact
 Ref: mochan.sold_physical_vouchers.reseller_id > mochan.master_reseller.reseller_id
 Ref: mochan.sold_physical_vouchers.product_id > mochan.master_product.product_id
 
-Ref: mochan.master_supplier_sub.supplier_id > mochan.master_supplier.supplier_id
+// future FK (deferred): master_supplier_sub.supplier_id > master_supplier.supplier_id — no FK yet, sub rows can arrive before their supplier (CDC is unordered)
 Ref: mochan.master_supplier_sub_ledger.supplier_sub_id > mochan.master_supplier_sub.supplier_sub_id

@@ -101,6 +101,7 @@ CREATE TABLE mochan.master_operator (
 
 -- Table Triggers
 
+-- needs etl.sql (etl.notify_outbox) applied first
 create trigger trg_etl_notify after
 insert
     or
@@ -375,7 +376,7 @@ CREATE TABLE mochan.sold_physical_vouchers (
 CREATE TABLE mochan.master_supplier_sub (
   supplier_sub_id BIGINT PRIMARY KEY,
   supplier_sub_name VARCHAR(100) NOT NULL,
-  supplier_id BIGINT NOT NULL,
+  supplier_id INTEGER NOT NULL,
   format_no_alokasi VARCHAR(30) NOT NULL DEFAULT '',
   is_ppob BOOLEAN NOT NULL DEFAULT FALSE,
   created_at TIMESTAMP NOT NULL,
@@ -388,6 +389,9 @@ CREATE INDEX idx_master_supplier_sub_supplier_id
 
 CREATE UNIQUE INDEX uq_master_supplier_sub_supplier_id_supplier_sub_name
   ON mochan.master_supplier_sub (supplier_id, supplier_sub_name);
+
+COMMENT ON COLUMN mochan.master_supplier_sub.supplier_id IS
+  'int4, same as master_supplier. No FK yet — sub rows can arrive before their supplier (CDC is unordered).';
 
 -- mochan.master_supplier_sub_ledger definition
 -- Drop table
