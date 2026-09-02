@@ -1,0 +1,8 @@
+Table etl.outbox {
+  outbox_id BIGINT [pk]
+  table_name TEXT [not null]
+  op TEXT [not null]
+  row_id TEXT [not null]
+  row_data JSONB [not null]
+  created_at TIMESTAMPTZ [not null]
+}

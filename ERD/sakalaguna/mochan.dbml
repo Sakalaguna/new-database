@@ -1,4 +1,4 @@
-Table master_operator {
+Table mochan.master_operator {
   operator_id INT [pk, increment]
   operator_name VARCHAR(100) [not null]
   is_partitioned BOOLEAN [not null, default: false]
@@ -10,7 +10,7 @@ Table master_operator {
   updated_by VARCHAR(50)
 }
 
-Table master_supplier {
+Table mochan.master_supplier {
   supplier_id INT [pk, increment]
   supplier_name VARCHAR(100) [not null]
   address VARCHAR(255)
@@ -18,11 +18,11 @@ Table master_supplier {
   is_active BOOLEAN [not null, default: true]
   created_at TIMESTAMP [not null]
   updated_at TIMESTAMP
-  updated_by VARCHAR(50) 
+  updated_by VARCHAR(50)
   deleted_at TIMESTAMP
 }
 
-Table master_terminal {
+Table mochan.master_terminal {
   terminal_id INT [pk, increment]
   terminal_name VARCHAR(150) [not null]
   terminal_type VARCHAR(10)
@@ -35,7 +35,7 @@ Table master_terminal {
   deleted_at TIMESTAMP
 }
 
-Table master_reseller {
+Table mochan.master_reseller {
   reseller_id BIGINT [pk, increment]
   reseller_code VARCHAR(16) [not null, unique]
   upline_reseller_id BIGINT
@@ -65,7 +65,7 @@ Table master_reseller {
   deleted_at TIMESTAMP
 }
 
-Table master_product {
+Table mochan.master_product {
   product_id INT [pk, increment]
   operator_id INT [not null]
   product_name VARCHAR(255) [not null]
@@ -84,7 +84,7 @@ Table master_product {
   deleted_at TIMESTAMP
 }
 
-Table transactions {
+Table mochan.transactions {
   transaction_id BIGINT [pk]
   reseller_id BIGINT [not null]
   reseller_name VARCHAR(100) [not null]
@@ -114,7 +114,7 @@ Table transactions {
   deleted_at TIMESTAMP
 }
 
-Table payments {
+Table mochan.payments {
   payment_id BIGINT [pk, increment]
   reseller_id BIGINT [not null]
   payment_at TIMESTAMP [not null]
@@ -130,7 +130,7 @@ Table payments {
   deleted_at TIMESTAMP
 }
 
-Table reseller_balance_histories {
+Table mochan.reseller_balance_histories {
   balance_history_id BIGINT [pk, increment]
   reseller_id BIGINT [not null]
   transaction_id BIGINT
@@ -145,7 +145,7 @@ Table reseller_balance_histories {
   deleted_at TIMESTAMP
 }
 
-Table sold_physical_vouchers {
+Table mochan.sold_physical_vouchers {
   transaction_id BIGINT [pk]
   serial_number VARCHAR(32)
   scratch_number VARCHAR(32)
@@ -161,18 +161,18 @@ Table sold_physical_vouchers {
   deleted_at TIMESTAMP
 }
 
-Table user_access_logs {
+Table mochan.user_access_logs {
   access_log_id BIGINT [pk, increment]
   logged_at TIMESTAMP [not null]
   user_id VARCHAR(36) [not null]
   description VARCHAR(512)
-  created_at TIMESTAMP [not null] 
+  created_at TIMESTAMP [not null]
   updated_at TIMESTAMP
   updated_by VARCHAR(50)
   deleted_at TIMESTAMP
 }
 
-Table data_migration_monitor_daily {
+Table mochan.data_migration_monitor_daily {
   monitor_date DATE [pk]
 
   hist_partner_row_count_legacy BIGINT [not null, default: 0]
@@ -185,7 +185,7 @@ Table data_migration_monitor_daily {
   hist_partner_amount_new NUMERIC(19,4) [not null, default: 0]
 
   success_count_legacy INT [not null, default: 0]
-  failed_count_legacy INT [not null, default: 0] 
+  failed_count_legacy INT [not null, default: 0]
   pending_count_legacy INT [not null, default: 0]
   total_trx_legacy INT [not null, default: 0]
 
@@ -198,7 +198,7 @@ Table data_migration_monitor_daily {
   total_ppob_trx_new INT [not null, default: 0]
 }
 
-Table daily_transaction_mutations {
+Table mochan.daily_transaction_mutations {
   mutation_date DATE
   supplier_name VARCHAR(50)
   sub_supplier_name VARCHAR(50)
@@ -230,54 +230,55 @@ Table daily_transaction_mutations {
   supplier_fee NUMERIC(19,4)
 }
 
-Table master_supplier_sub {
-  id_sub_supplier bigint [pk]
-  nama_sub_supplier varchar(100) [not null]
-  id_supplier bigint [not null]
-  format_no_alokasi varchar(30) [not null, default: '']
-  flag_ppob boolean [not null, default: false]
-  created_at timestamp [not null]
-  updated_at timestamp
-  deleted_at timestamp
-  updated_by varchar(50)
+Table mochan.master_supplier_sub {
+  supplier_sub_id BIGINT [pk]
+  supplier_sub_name VARCHAR(100) [not null]
+  supplier_id BIGINT [not null]
+  format_no_alokasi VARCHAR(30) [not null, default: '']
+  is_ppob BOOLEAN [not null, default: false]
+  created_at TIMESTAMP [not null]
+  updated_at TIMESTAMP
+  updated_by VARCHAR(50)
+  deleted_at TIMESTAMP
   indexes {
-    id_supplier
-    (id_supplier, nama_sub_supplier) [unique]
+    supplier_id
+    (supplier_id, supplier_sub_name) [unique]
   }
 }
 
-Table master_supplier_sub_ledger {
-  id_supplier_sub_ledger bigint [pk, increment]
-  id_sub_supplier bigint [not null]
-  ledger_type varchar(50) [not null]
-  ledger_id varchar(30) [not null]
-  created_at timestamp [not null]
-  updated_at timestamp
-  deleted_at timestamp
-  updated_by varchar(50)
+Table mochan.master_supplier_sub_ledger {
+  supplier_sub_ledger_id BIGINT [pk, increment]
+  supplier_sub_id BIGINT [not null]
+  ledger_type VARCHAR(50) [not null]
+  ledger_id VARCHAR(30) [not null]
+  created_at TIMESTAMP [not null]
+  updated_at TIMESTAMP
+  updated_by VARCHAR(50)
+  deleted_at TIMESTAMP
   indexes {
-    (id_sub_supplier, ledger_type) [unique]
+    (supplier_sub_id, ledger_type) [unique]
     ledger_id
   }
 }
 
 
-Ref: master_terminal.supplier_id > master_supplier.supplier_id
+Ref: mochan.master_terminal.supplier_id > mochan.master_supplier.supplier_id
 
-Ref: master_product.operator_id > master_operator.operator_id
-Ref: master_reseller.upline_reseller_id > master_reseller.reseller_id
+Ref: mochan.master_product.operator_id > mochan.master_operator.operator_id
+Ref: mochan.master_reseller.upline_reseller_id > mochan.master_reseller.reseller_id
 
-Ref: transactions.reseller_id > master_reseller.reseller_id
-Ref: transactions.product_id > master_product.product_id
-Ref: transactions.terminal_id > master_terminal.terminal_id
+Ref: mochan.transactions.reseller_id > mochan.master_reseller.reseller_id
+Ref: mochan.transactions.product_id > mochan.master_product.product_id
+Ref: mochan.transactions.terminal_id > mochan.master_terminal.terminal_id
 
-Ref: payments.reseller_id > master_reseller.reseller_id
+Ref: mochan.payments.reseller_id > mochan.master_reseller.reseller_id
 
-Ref: reseller_balance_histories.reseller_id > master_reseller.reseller_id
-Ref: reseller_balance_histories.transaction_id > transactions.transaction_id
+Ref: mochan.reseller_balance_histories.reseller_id > mochan.master_reseller.reseller_id
+Ref: mochan.reseller_balance_histories.transaction_id > mochan.transactions.transaction_id
 
-Ref: sold_physical_vouchers.transaction_id > transactions.transaction_id
-Ref: sold_physical_vouchers.reseller_id > master_reseller.reseller_id
-Ref: sold_physical_vouchers.product_id > master_product.product_id
+Ref: mochan.sold_physical_vouchers.transaction_id > mochan.transactions.transaction_id
+Ref: mochan.sold_physical_vouchers.reseller_id > mochan.master_reseller.reseller_id
+Ref: mochan.sold_physical_vouchers.product_id > mochan.master_product.product_id
 
-Ref: master_supplier_sub_ledger.id_sub_supplier > master_supplier_sub.id_sub_supplier
+Ref: mochan.master_supplier_sub.supplier_id > mochan.master_supplier.supplier_id
+Ref: mochan.master_supplier_sub_ledger.supplier_sub_id > mochan.master_supplier_sub.supplier_sub_id
